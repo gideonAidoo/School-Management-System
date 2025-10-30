@@ -69,6 +69,7 @@ const BulkPrint = () => {
     for (const student of studentsToDownload) {
       const report = generateTermReport(student.id);
       console.log('Downloading report for:', student.name, report);
+      
       // In a real app, you would generate and download PDF here
       await new Promise(resolve => setTimeout(resolve, 300)); // Simulate delay
     }

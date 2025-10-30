@@ -1,7 +1,5 @@
-// src/components/Layout/Sidebar.jsx (with fallback icons)
 import React from 'react';
 
-// Fallback icon components in case lucide-react fails
 const LayoutDashboard = ({ className }) => <span className={className}>📊</span>;
 const Users = ({ className }) => <span className={className}>👥</span>;
 const FileText = ({ className }) => <span className={className}>📄</span>;

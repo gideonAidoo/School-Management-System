@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import React from 'react';
 import { useExam } from '../context/ExamContext';
 import { 

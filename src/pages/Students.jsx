@@ -1,4 +1,3 @@
-// src/pages/Students.jsx
 import React, { useState } from 'react';
 import { useExam } from '../context/ExamContext';
 import { Search, Plus, Edit, Trash2, User, Mail } from 'lucide-react';

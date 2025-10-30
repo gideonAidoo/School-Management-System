@@ -1,4 +1,3 @@
-// src/data/sampleData.js
 export const sampleData = {
   students: [
     {
