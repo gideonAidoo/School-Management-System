@@ -1,0 +1,12 @@
+
+
+@import "tailwindcss";
+
+.bg-primary-50 { background-color: var(--color-primary-50, #eff6ff); }
+.text-primary-600 { color: var(--color-primary-600, #2563eb); }
+.text-primary-700 { color: var(--color-primary-700, #1d4ed8); }
+.border-primary-600 { border-color: var(--color-primary-600, #2563eb); }
+
+.bg-gray-100 { background-color: var(--color-gray-100, #f3f4f6); }
+.text-gray-600 { color: var(--color-gray-600, #4b5563); }
+.text-gray-800 { color: var(--color-gray-800, #1f2937); }
