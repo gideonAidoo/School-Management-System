@@ -69,6 +69,7 @@ export const sampleData = {
     { studentId: 'S001', subjectId: 'SCI', subjectName: 'Science', marks: 92, totalMarks: 100, grade: 'A+' },
     { studentId: 'S001', subjectId: 'SOC', subjectName: 'Social Studies', marks: 88, totalMarks: 100, grade: 'A' },
     
+    
     { studentId: 'S002', subjectId: 'MATH', subjectName: 'Mathematics', marks: 95, totalMarks: 100, grade: 'A+' },
     { studentId: 'S002', subjectId: 'ENG', subjectName: 'English', marks: 89, totalMarks: 100, grade: 'A' },
     { studentId: 'S002', subjectId: 'SCI', subjectName: 'Science', marks: 91, totalMarks: 100, grade: 'A+' },

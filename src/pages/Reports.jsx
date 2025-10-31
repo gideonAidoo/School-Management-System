@@ -207,21 +207,21 @@ const Reports = () => {
                           className="flex items-center space-x-1 text-primary-600 hover:text-primary-900"
                         >
                           <Eye className="h-4 w-4" />
-                          <span>Preview</span>
+                          <span className='cursor-pointer'>Preview</span>
                         </button>
                         <button
                           onClick={() => handlePrint(student.id)}
                           className="flex items-center space-x-1 text-green-600 hover:text-green-900"
                         >
                           <Printer className="h-4 w-4" />
-                          <span>Print</span>
+                          <span className='cursor-pointer'>Print</span>
                         </button>
                         <button 
                           onClick={() => handleDownload(student.id)}
                           className="flex items-center space-x-1 text-gray-600 hover:text-gray-900"
                         >
                           <Download className="h-4 w-4" />
-                          <span>PDF</span>
+                          <span className='cursor-pointer hover:text-slate-500'>PDF</span>
                         </button>
                       </div>
                     </td>

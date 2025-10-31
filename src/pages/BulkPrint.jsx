@@ -1,6 +1,7 @@
+// src/pages/BulkPrint.jsx
 import React, { useState } from 'react';
 import { useExam } from '../context/ExamContext';
-import { Printer, Download, Filter, Users, Check, CheckCircle } from 'lucide-react';
+import { Printer, Download, Filter, Users, Check, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 
 const BulkPrint = () => {
   const { students, generateTermReport } = useExam();
@@ -9,16 +10,21 @@ const BulkPrint = () => {
   const [selectedStudents, setSelectedStudents] = useState(new Set());
   const [isPrinting, setIsPrinting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [operationProgress, setOperationProgress] = useState({ current: 0, total: 0 });
+  const [completedOperations, setCompletedOperations] = useState([]);
 
+  // Get unique grades and sections for filters
   const grades = [...new Set(students.map(s => s.grade))];
   const sections = [...new Set(students.map(s => s.section))];
 
+  // Filter students based on filters
   const filteredStudents = students.filter(student => {
     const matchesGrade = !selectedGrade || student.grade === selectedGrade;
     const matchesSection = !selectedSection || student.section === selectedSection;
     return matchesGrade && matchesSection;
   });
 
+  // Toggle student selection
   const toggleStudentSelection = (studentId) => {
     const newSelected = new Set(selectedStudents);
     if (newSelected.has(studentId)) {
@@ -29,6 +35,7 @@ const BulkPrint = () => {
     setSelectedStudents(newSelected);
   };
 
+  // Select all filtered students
   const selectAll = () => {
     if (selectedStudents.size === filteredStudents.length) {
       setSelectedStudents(new Set());
@@ -37,6 +44,7 @@ const BulkPrint = () => {
     }
   };
 
+  // Handle bulk print operation
   const handleBulkPrint = async () => {
     if (selectedStudents.size === 0) return;
     
@@ -45,18 +53,32 @@ const BulkPrint = () => {
       selectedStudents.has(student.id)
     );
     
-    // Simulate printing process
-    for (const student of studentsToPrint) {
+    setOperationProgress({ current: 0, total: studentsToPrint.length });
+    setCompletedOperations([]);
+
+    for (let i = 0; i < studentsToPrint.length; i++) {
+      const student = studentsToPrint[i];
       const report = generateTermReport(student.id);
-      console.log('Printing report for:', student.name, report);
-      // In a real app, you would generate PDF here
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
+      
+      // Simulate printing process with delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setOperationProgress({ current: i + 1, total: studentsToPrint.length });
+      setCompletedOperations(prev => [...prev, {
+        student: student.name,
+        type: 'print',
+        success: true,
+        timestamp: new Date()
+      }]);
+      
+      console.log('Printed report for:', student.name);
     }
     
     setIsPrinting(false);
-    alert(`Successfully printed ${studentsToPrint.length} report cards!`);
+    setOperationProgress({ current: 0, total: 0 });
   };
 
+  // Handle bulk download operation
   const handleBulkDownload = async () => {
     if (selectedStudents.size === 0) return;
     
@@ -65,36 +87,64 @@ const BulkPrint = () => {
       selectedStudents.has(student.id)
     );
     
-    // Simulate download process
-    for (const student of studentsToDownload) {
+    setOperationProgress({ current: 0, total: studentsToDownload.length });
+    setCompletedOperations([]);
+
+    for (let i = 0; i < studentsToDownload.length; i++) {
+      const student = studentsToDownload[i];
       const report = generateTermReport(student.id);
-      console.log('Downloading report for:', student.name, report);
       
-      // In a real app, you would generate and download PDF here
-      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate delay
+      // Simulate download process with delay
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      setOperationProgress({ current: i + 1, total: studentsToDownload.length });
+      setCompletedOperations(prev => [...prev, {
+        student: student.name,
+        type: 'download',
+        success: true,
+        timestamp: new Date()
+      }]);
+      
+      console.log('Downloaded report for:', student.name);
     }
     
     setIsDownloading(false);
-    alert(`Successfully downloaded ${studentsToDownload.length} report cards!`);
+    setOperationProgress({ current: 0, total: 0 });
   };
 
+  // Get student performance data
   const getStudentAverage = (studentId) => {
-    const studentResults = students.find(s => s.id === studentId)?.results || [];
-    if (!studentResults.length) return 0;
-    return studentResults.reduce((sum, r) => sum + r.marks, 0) / studentResults.length;
+    const report = generateTermReport(studentId);
+    return report?.average || 0;
   };
+
+  const getStudentGrade = (studentId) => {
+    const report = generateTermReport(studentId);
+    return report?.overallGrade || 'N/A';
+  };
+
+  const hasStudentResults = (studentId) => {
+    const report = generateTermReport(studentId);
+    return report?.results?.length > 0;
+  };
+
+  // Calculate progress percentage
+  const progressPercentage = operationProgress.total > 0 
+    ? (operationProgress.current / operationProgress.total) * 100 
+    : 0;
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Bulk Print</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Bulk Operations</h1>
           <p className="text-gray-600">Generate report cards for multiple students at once</p>
         </div>
         <div className="flex space-x-3">
           <button
             onClick={handleBulkDownload}
-            disabled={selectedStudents.size === 0 || isDownloading}
+            disabled={selectedStudents.size === 0 || isDownloading || isPrinting}
             className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             <Download className="h-5 w-5" />
@@ -104,7 +154,7 @@ const BulkPrint = () => {
           </button>
           <button
             onClick={handleBulkPrint}
-            disabled={selectedStudents.size === 0 || isPrinting}
+            disabled={selectedStudents.size === 0 || isPrinting || isDownloading}
             className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             <Printer className="h-5 w-5" />
@@ -115,14 +165,63 @@ const BulkPrint = () => {
         </div>
       </div>
 
+      {/* Operation Progress */}
+      {(isPrinting || isDownloading) && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <Loader className="h-5 w-5 text-blue-600 animate-spin" />
+              <div>
+                <p className="font-semibold text-blue-900">
+                  {isPrinting ? 'Printing Reports' : 'Downloading Reports'}
+                </p>
+                <p className="text-sm text-blue-700">
+                  {operationProgress.current} of {operationProgress.total} completed
+                </p>
+              </div>
+            </div>
+            <span className="text-sm font-medium text-blue-900">
+              {Math.round(progressPercentage)}%
+            </span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+
+      {/* Completed Operations Log */}
+      {completedOperations.length > 0 && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-900 mb-3">Recent Operations</h3>
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {completedOperations.slice(-5).map((op, index) => (
+              <div key={index} className="flex items-center space-x-3 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-gray-700">{op.student}</span>
+                <span className="text-gray-500">
+                  {op.type === 'print' ? 'printed' : 'downloaded'}
+                </span>
+                <span className="text-gray-400 text-xs">
+                  {op.timestamp.toLocaleTimeString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border p-4">
         <div className="flex items-center space-x-4 mb-4">
           <Filter className="h-5 w-5 text-gray-600" />
           <h3 className="text-lg font-semibold">Filters</h3>
         </div>
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Grade
             </label>
@@ -137,7 +236,7 @@ const BulkPrint = () => {
               ))}
             </select>
           </div>
-          <div className="flex-1">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Section
             </label>
@@ -219,7 +318,7 @@ const BulkPrint = () => {
                   Grade & Section
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Average Score
+                  Performance
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -229,6 +328,8 @@ const BulkPrint = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredStudents.map((student) => {
                 const average = getStudentAverage(student.id);
+                const overallGrade = getStudentGrade(student.id);
+                const hasResults = hasStudentResults(student.id);
                 const isSelected = selectedStudents.has(student.id);
                 
                 return (
@@ -242,7 +343,8 @@ const BulkPrint = () => {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleStudentSelection(student.id)}
-                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                          disabled={!hasResults}
+                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                       </div>
                     </td>
@@ -267,22 +369,24 @@ const BulkPrint = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {average > 0 ? `${average.toFixed(1)}%` : 'N/A'}
+                        {hasResults ? `${average.toFixed(1)}%` : 'N/A'}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {student.results?.length || 0} subjects
+                        {hasResults ? `Grade: ${overallGrade}` : 'No results'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        average >= 60 
-                          ? 'bg-green-100 text-green-800' 
-                          : average > 0 
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {average >= 60 ? 'Excellent' : average > 0 ? 'Average' : 'No Data'}
-                      </span>
+                      {hasResults ? (
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                          <Check className="h-3 w-3 mr-1" />
+                          Ready
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          No Data
+                        </span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -320,7 +424,7 @@ const BulkPrint = () => {
             <div className="flex space-x-3">
               <button
                 onClick={handleBulkDownload}
-                disabled={isDownloading}
+                disabled={isDownloading || isPrinting}
                 className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors"
               >
                 <Download className="h-4 w-4" />
@@ -328,31 +432,12 @@ const BulkPrint = () => {
               </button>
               <button
                 onClick={handleBulkPrint}
-                disabled={isPrinting}
+                disabled={isPrinting || isDownloading}
                 className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 disabled:bg-gray-400 transition-colors"
               >
                 <Printer className="h-4 w-4" />
                 <span>{isPrinting ? 'Printing...' : 'Print All'}</span>
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Loading Overlay */}
-      {(isPrinting || isDownloading) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <div className="flex items-center space-x-3">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-              <div>
-                <p className="font-semibold text-gray-900">
-                  {isPrinting ? 'Printing Reports...' : 'Downloading Reports...'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Please wait while we process {selectedStudents.size} report cards
-                </p>
-              </div>
             </div>
           </div>
         </div>
